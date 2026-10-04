@@ -1,4 +1,3 @@
-```javascript
 /* =========================================
    QUICKNOTES
    Task 5: Persistence and search
@@ -110,7 +109,6 @@ function updateNoteCount() {
     }
 
 }
-
 
 /* =========================================
    7. RENDER NOTES
@@ -580,4 +578,3 @@ loadNotes();
    ========================================= */
 
 render();
-```
