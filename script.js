@@ -1,7 +1,7 @@
 ```javascript
 /* =========================================
    QUICKNOTES
-   Task 3: Add and display notes
+   Task 4: Validation, delete and count
    ========================================= */
 
 
@@ -28,21 +28,64 @@ let notes = [];
 
 
 /* =========================================
-   3. RENDER NOTES
+   3. UPDATE NOTE COUNT
+   ========================================= */
+
+function updateNoteCount() {
+
+    if (notes.length === 0) {
+        noteCount.textContent = "You have no notes yet.";
+    } else if (notes.length === 1) {
+        noteCount.textContent = "You have 1 note.";
+    } else {
+        noteCount.textContent = `You have ${notes.length} notes.`;
+    }
+
+}
+
+
+/* =========================================
+   4. RENDER NOTES
    ========================================= */
 
 function render(notesToRender = notes) {
+
     notesList.replaceChildren();
 
+
+    // Show an empty-search message
+    if (
+        notesToRender.length === 0 &&
+        notes.length > 0 &&
+        searchInput.value.trim() !== ""
+    ) {
+
+        const emptyMessage = document.createElement("li");
+
+        emptyMessage.classList.add("empty-state");
+
+        emptyMessage.textContent = "No notes match your search.";
+
+        notesList.appendChild(emptyMessage);
+
+        updateNoteCount();
+
+        return;
+    }
+
+
+    // Show normal notes
     notesToRender.forEach(function (note) {
 
-        // Create the main list item
         const listItem = document.createElement("li");
 
         listItem.classList.add("note-card");
 
-        // Add the category class
-        const categoryClass = `category-${note.category.toLowerCase()}`;
+
+        // Category class
+        const categoryClass =
+            `category-${note.category.toLowerCase()}`;
+
         listItem.classList.add(categoryClass);
 
 
@@ -50,6 +93,7 @@ function render(notesToRender = notes) {
         const categoryLabel = document.createElement("span");
 
         categoryLabel.classList.add("category-label");
+
         categoryLabel.textContent = note.category;
 
 
@@ -57,10 +101,11 @@ function render(notesToRender = notes) {
         const noteText = document.createElement("p");
 
         noteText.classList.add("note-text");
+
         noteText.textContent = note.text;
 
 
-        // Note footer
+        // Footer
         const noteFooter = document.createElement("div");
 
         noteFooter.classList.add("note-footer");
@@ -70,6 +115,7 @@ function render(notesToRender = notes) {
         const noteDate = document.createElement("small");
 
         noteDate.classList.add("note-date");
+
         noteDate.textContent = note.createdAt;
 
 
@@ -77,7 +123,9 @@ function render(notesToRender = notes) {
         const deleteButton = document.createElement("button");
 
         deleteButton.type = "button";
+
         deleteButton.classList.add("delete-button");
+
         deleteButton.textContent = "Delete";
 
         deleteButton.dataset.id = note.id;
@@ -88,20 +136,56 @@ function render(notesToRender = notes) {
         noteFooter.appendChild(deleteButton);
 
 
-        // Build note card
+        // Build card
         listItem.appendChild(categoryLabel);
         listItem.appendChild(noteText);
         listItem.appendChild(noteFooter);
 
 
-        // Add note card to list
+        // Add card to list
         notesList.appendChild(listItem);
+
     });
+
+
+    updateNoteCount();
+
 }
 
 
 /* =========================================
-   4. ADD A NOTE
+   5. VALIDATE NOTE
+   ========================================= */
+
+function validateNote(text) {
+
+    if (text.length === 0) {
+
+        errorMessage.textContent =
+            "Please type a note first.";
+
+        return false;
+    }
+
+
+    if (text.length > 200) {
+
+        errorMessage.textContent =
+            "Notes must be 200 characters or fewer.";
+
+        return false;
+    }
+
+
+    errorMessage.textContent = "";
+
+    return true;
+
+}
+
+
+/* =========================================
+   6. ADD A NOTE
    ========================================= */
 
 noteForm.addEventListener("submit", function (event) {
@@ -109,56 +193,71 @@ noteForm.addEventListener("submit", function (event) {
     event.preventDefault();
 
 
-    // Get and clean the note text
     const text = noteInput.value.trim();
 
-
-    // Get selected category
     const category = noteCategory.value;
 
 
-    // Create a new note object
+    // Validate before creating the note
+    if (!validateNote(text)) {
+        return;
+    }
+
+
+    // Create note object
     const newNote = {
+
         id: Date.now().toString(),
+
         text: text,
+
         category: category,
+
         createdAt: new Date().toLocaleString()
+
     };
 
 
-    // Add the note to the array
+    // Add newest note to the beginning
     notes.unshift(newNote);
 
 
-    // Render the updated list
-    render();
-
-
-    // Clear the input
+    // Clear the form
     noteInput.value = "";
 
-
-    // Reset character counter
     characterCount.textContent = "0 / 200";
+
+    errorMessage.textContent = "";
+
+
+    // Render
+    render();
 
 });
 
 
 /* =========================================
-   5. CHARACTER COUNTER
+   7. CHARACTER COUNTER
    ========================================= */
 
 noteInput.addEventListener("input", function () {
 
     const currentLength = noteInput.value.length;
 
-    characterCount.textContent = `${currentLength} / 200`;
+    characterCount.textContent =
+        `${currentLength} / 200`;
+
+
+    // Clear an old error while typing
+    if (currentLength > 0) {
+        errorMessage.textContent = "";
+    }
 
 });
 
 
 /* =========================================
-   6. DELETE A NOTE
+   8. DELETE A NOTE
    ========================================= */
 
 notesList.addEventListener("click", function (event) {
@@ -167,11 +266,16 @@ notesList.addEventListener("click", function (event) {
         return;
     }
 
+
     const noteId = event.target.dataset.id;
 
+
     notes = notes.filter(function (note) {
+
         return note.id !== noteId;
+
     });
+
 
     render();
 
@@ -179,18 +283,23 @@ notesList.addEventListener("click", function (event) {
 
 
 /* =========================================
-   7. SEARCH
+   9. SEARCH
    ========================================= */
 
 searchInput.addEventListener("input", function () {
 
-    const searchTerm = searchInput.value.trim().toLowerCase();
+    const searchTerm =
+        searchInput.value.trim().toLowerCase();
+
 
     const filteredNotes = notes.filter(function (note) {
 
-        return note.text.toLowerCase().includes(searchTerm);
+        return note.text
+            .toLowerCase()
+            .includes(searchTerm);
 
     });
+
 
     render(filteredNotes);
 
@@ -198,7 +307,7 @@ searchInput.addEventListener("input", function () {
 
 
 /* =========================================
-   8. CLEAR ALL
+   10. CLEAR ALL
    ========================================= */
 
 clearAllButton.addEventListener("click", function () {
@@ -207,19 +316,26 @@ clearAllButton.addEventListener("click", function () {
         return;
     }
 
-    const confirmed = confirm("Delete all notes?");
+
+    const confirmed =
+        confirm("Delete all notes?");
+
 
     if (confirmed) {
+
         notes = [];
+
         render();
+
     }
 
 });
 
 
 /* =========================================
-   9. INITIAL RENDER
+   11. INITIAL RENDER
    ========================================= */
 
 render();
 ```
+
